@@ -1,0 +1,5 @@
+ALTER TABLE "Message"
+ADD COLUMN "fileUrl" TEXT,
+ADD COLUMN "fileName" VARCHAR(255),
+ADD COLUMN "fileSize" INTEGER,
+ADD COLUMN "mimeType" VARCHAR(150);

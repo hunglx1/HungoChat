@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ConversationType {
+  direct
+  group
+}
+
+enum FriendRequestStatus {
+  PENDING
+}
+
+model User {
+  id               String                    @id @default(cuid())
+  username         String                    @unique @db.VarChar(50)
+  hashedPassword   String
+  email            String                    @unique @db.VarChar(255)
+  displayName      String                    @db.VarChar(120)
+  avatarUrl        String?
+  avatarId         String?
+  bio              String?                   @db.VarChar(500)
+  phone            String?                   @unique @db.VarChar(30)
+  createdAt        DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime                  @updatedAt @db.Timestamptz(3)
+  sessions         Session[]
+  messages         Message[]
+  pollVotes        PollVote[]
+  participants     ConversationParticipant[]
+  sentRequests     FriendRequest[]           @relation("FriendRequestSender")
+  receivedRequests FriendRequest[]           @relation("FriendRequestReceiver")
+  friendshipsA     Friend[]                  @relation("FriendUserA")
+  friendshipsB     Friend[]                  @relation("FriendUserB")
+  createdGroups    Conversation[]            @relation("ConversationCreator")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  expiresAt    DateTime @db.Timestamptz(3)
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Conversation {
+  id            String                    @id @default(cuid())
+  type          ConversationType
+  name          String?                   @db.VarChar(120)
+  createdById   String?
+  directKey     String?                   @unique @db.VarChar(100)
+  lastMessageId String?                   @unique
+  lastMessageAt DateTime?                 @db.Timestamptz(3)
+  createdAt     DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime                  @updatedAt @db.Timestamptz(3)
+  createdBy     User?                     @relation("ConversationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  participants  ConversationParticipant[]
+  messages      Message[]                 @relation("ConversationMessages")
+  lastMessage   Message?                  @relation("ConversationLastMessage", fields: [lastMessageId], references: [id], onDelete: SetNull)
+
+  @@index([lastMessageAt])
+}
+
+model ConversationParticipant {
+  conversationId String
+  userId         String
+  unreadCount    Int          @default(0)
+  joinedAt       DateTime     @default(now()) @db.Timestamptz(3)
+  lastSeenAt     DateTime?    @db.Timestamptz(3)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId, conversationId])
+}
+
+model Message {
+  id                  String        @id @default(cuid())
+  conversationId      String
+  senderId            String
+  content             String?
+  imgUrl              String?
+  fileUrl             String?
+  fileName            String?       @db.VarChar(255)
+  fileSize            Int?
+  mimeType            String?       @db.VarChar(150)
+  messageType         String        @default("text") @db.VarChar(30)
+  createdAt           DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime      @updatedAt @db.Timestamptz(3)
+  conversation        Conversation  @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
+  sender              User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  lastForConversation Conversation? @relation("ConversationLastMessage")
+  poll                Poll?
+
+  @@index([conversationId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([senderId])
+}
+
+model Poll {
+  id        String       @id @default(cuid())
+  messageId String       @unique
+  question  String       @db.VarChar(500)
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  message   Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  options   PollOption[]
+  votes     PollVote[]
+}
+
+model PollOption {
+  id     String     @id @default(cuid())
+  pollId String
+  position Int
+  text   String     @db.VarChar(160)
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes  PollVote[]
+
+  @@index([pollId])
+}
+
+model PollVote {
+  id        String     @id @default(cuid())
+  pollId    String
+  optionId  String
+  userId    String
+  createdAt DateTime   @default(now()) @db.Timestamptz(3)
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@index([optionId])
+}
+
+model Friend {
+  id        String   @id @default(cuid())
+  userA     String
+  userB     String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  userARef  User     @relation("FriendUserA", fields: [userA], references: [id], onDelete: Cascade)
+  userBRef  User     @relation("FriendUserB", fields: [userB], references: [id], onDelete: Cascade)
+
+  @@unique([userA, userB])
+  @@index([userB])
+}
+
+model FriendRequest {
+  id        String              @id @default(cuid())
+  fromId    String
+  toId      String
+  message   String?             @db.VarChar(300)
+  status    FriendRequestStatus @default(PENDING)
+  createdAt DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime            @updatedAt @db.Timestamptz(3)
+  sender    User                @relation("FriendRequestSender", fields: [fromId], references: [id], onDelete: Cascade)
+  receiver  User                @relation("FriendRequestReceiver", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([fromId, toId])
+  @@index([fromId, status])
+  @@index([toId, status])
+}
