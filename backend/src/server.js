@@ -18,11 +18,26 @@ import prisma from "./libs/prisma.js";
 
 // const app = express();
 const PORT = process.env.PORT || 5001;
+const allowedOrigins = process.env.CLIENT_URL?.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // middlewares
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || !allowedOrigins || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+    },
+    credentials: true,
+  })
+);
 
 // CLOUDINARY Configuration
 cloudinary.config({
