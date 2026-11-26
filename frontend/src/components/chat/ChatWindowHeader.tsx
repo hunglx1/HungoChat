@@ -34,7 +34,7 @@ export const ChatWindowHeader = ({ chat }: ChatWindowHeaderProps) => {
   const { conversations, activeConversationId, setActiveConversation } =
     useChatStore();
   const { user } = useAuthStore();
-  const { onlineUsers } = useSocketStore();
+  const { onlineUsers, connectSocket } = useSocketStore();
   const { startCall, status } = useVideoCallStore();
   const { isInfoSidebarOpen, toggleInfoSidebar, pinnedMessage, setPinnedMessage } =
     useLayoutStore();
@@ -70,6 +70,7 @@ export const ChatWindowHeader = ({ chat }: ChatWindowHeaderProps) => {
   const handleVoiceCall = async () => {
     if (!otherUser || !selectedConvo) return;
     try {
+      connectSocket();
       await startCall(
         selectedConvo._id,
         otherUser._id,
@@ -192,6 +193,7 @@ export const ChatWindowHeader = ({ chat }: ChatWindowHeaderProps) => {
                   disabled={status !== "idle"}
                   onClick={async () => {
                     try {
+                      connectSocket();
                       await startCall(
                         selectedConvo._id,
                         otherUser._id,

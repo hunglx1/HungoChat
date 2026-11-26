@@ -18,8 +18,15 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     const existingSocket = get().socket;
 
     if (existingSocket) {
-      if (existingSocket.disconnected) {
+      const currentAuthToken =
+        typeof existingSocket.auth === "object"
+          ? (existingSocket.auth as { token?: string }).token
+          : undefined;
+      if (existingSocket.disconnected || currentAuthToken !== accessToken) {
         existingSocket.auth = { token: accessToken };
+        if (existingSocket.connected) {
+          existingSocket.disconnect();
+        }
         existingSocket.connect();
       }
       return;

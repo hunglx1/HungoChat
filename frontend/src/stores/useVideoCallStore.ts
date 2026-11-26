@@ -123,7 +123,7 @@ export const useVideoCallStore = create<VideoCallState>((set, get) => {
         socket.off("connect", onConnect);
         socket.off("connect_error", onError);
         reject(new Error("Không thể kết nối máy chủ cuộc gọi"));
-      }, 10_000);
+      }, 30_000);
 
       const onConnect = () => {
         window.clearTimeout(timeout);
@@ -149,7 +149,7 @@ export const useVideoCallStore = create<VideoCallState>((set, get) => {
     new Promise<{ ok: boolean; message?: string }>((resolve, reject) => {
       const timeout = window.setTimeout(() => {
         reject(new Error("Máy chủ cuộc gọi không phản hồi"));
-      }, 10_000);
+      }, 30_000);
       socket.emit(event, payload, (result: { ok: boolean; message?: string }) => {
         window.clearTimeout(timeout);
         resolve(result);
