@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 
 export const ContactsView = () => {
   const { friends, getFriends, receivedList } = useFriendStore();
-  const { conversations, setActiveConversation, sendDirectMessage } = useChatStore();
+  const { conversations, setActiveConversation, createConversation } = useChatStore();
   const { onlineUsers } = useSocketStore();
   const { setActiveNavTab } = useLayoutStore();
 
@@ -48,9 +48,9 @@ export const ContactsView = () => {
     if (existing) {
       setActiveConversation(existing._id);
     } else {
-      // Start chat by selecting or sending initial message
+      // Create or reuse the direct conversation before switching to chat.
       try {
-        await sendDirectMessage(friendId, "Xin chào! 👋");
+        await createConversation("direct", "", [friendId]);
       } catch (err) {
         console.error(err);
       }

@@ -1,4 +1,5 @@
 import prisma from "../libs/prisma.js";
+import { io } from "../socket/index.js";
 
 const userSummary = (user) => ({
   _id: user.id,
@@ -109,7 +110,7 @@ export const acceptFriendRequest = async (req, res) => {
         where: { id: request.fromId },
         select: { id: true, username: true, displayName: true, avatarUrl: true },
       });
-      return { user };
+      return { user, requesterId: request.fromId };
     }, { isolationLevel: "Serializable" });
 
     if (acceptedUser.error === "missing") {
@@ -121,6 +122,13 @@ export const acceptFriendRequest = async (req, res) => {
         .json({ message: "Bạn không có quyền chấp nhận lời mời này" });
     }
     const newFriend = userSummary(acceptedUser.user);
+    io.to(userId).emit("friend-request:accepted", {
+      requestId,
+      friend: newFriend,
+    });
+    io.to(acceptedUser.requesterId).emit("friend-request:accepted", {
+      requestId,
+    });
     return res.status(200).json({
       message: "Chấp nhận lời mời kết bạn thành công",
       newFriend,

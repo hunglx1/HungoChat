@@ -32,7 +32,7 @@ const IniviteSuggestionList = ({
           <UserAvatar
             type="chat"
             name={friend.displayName}
-            avatarUrl={friend.avatarUrl}
+            avatarUrl={friend.avatarUrl || undefined}
           />
 
           <span className="font-medium">{friend.displayName}</span>

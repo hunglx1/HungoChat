@@ -50,6 +50,7 @@ io.on("connection", async (socket) => {
   onlineUsers.set(user._id, userSockets);
   socket.join(user._id);
   io.emit("online-users", Array.from(onlineUsers.keys()));
+  socket.emit("online-users", Array.from(onlineUsers.keys()));
 
   try {
     const conversationIds = await getUserConversationsForSocketIO(user._id);
@@ -200,15 +201,17 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("disconnect", () => {
-    const callId = activeCallByUser.get(user._id);
-    const call = callId ? removeCall(callId) : null;
-    if (call) {
-      const recipientId = call.callerId === user._id ? call.calleeId : call.callerId;
-      io.to(recipientId).emit("call:ended", { callId, reason: "disconnected" });
-    }
     const sockets = onlineUsers.get(user._id);
     sockets?.delete(socket.id);
-    if (!sockets?.size) onlineUsers.delete(user._id);
+    if (!sockets?.size) {
+      onlineUsers.delete(user._id);
+      const callId = activeCallByUser.get(user._id);
+      const call = callId ? removeCall(callId) : null;
+      if (call) {
+        const recipientId = call.callerId === user._id ? call.calleeId : call.callerId;
+        io.to(recipientId).emit("call:ended", { callId, reason: "disconnected" });
+      }
+    }
     io.emit("online-users", Array.from(onlineUsers.keys()));
   });
 });

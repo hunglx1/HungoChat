@@ -21,7 +21,7 @@ const SelectedUsersList = ({ invitedUsers, onRemove }: SelectedUsersListProps) =
           <UserAvatar
             type="chat"
             name={user.displayName}
-            avatarUrl={user.avatarUrl}
+            avatarUrl={user.avatarUrl || undefined}
           />
           <span>{user.displayName}</span>
 

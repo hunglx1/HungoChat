@@ -22,12 +22,10 @@ export const friendService = {
   },
 
   async acceptRequest(requestId: string) {
-    try {
-      const res = await api.post(`/friends/requests/${requestId}/accept`);
-      return res.data.requestAcceptedBy;
-    } catch (error) {
-      console.error("Lỗi khi gửi acceptRequest", error);
-    }
+    const res = await api.post(`/friends/requests/${requestId}/accept`);
+    return res.data.newFriend as
+      | { _id: string; username: string; displayName: string; avatarUrl: string | null }
+      | undefined;
   },
 
   async declineRequest(requestId: string) {

@@ -4,6 +4,7 @@ import { useAuthStore } from "./useAuthStore";
 import type { SocketState } from "@/types/store";
 import { useChatStore } from "./useChatStore";
 import { useVideoCallStore } from "./useVideoCallStore";
+import { useFriendStore } from "./useFriendStore";
 
 const baseURL =
   import.meta.env.VITE_SOCKET_URL ||
@@ -16,7 +17,13 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     const accessToken = useAuthStore.getState().accessToken;
     const existingSocket = get().socket;
 
-    if (existingSocket) return; // tránh tạo nhiều socket
+    if (existingSocket) {
+      if (existingSocket.disconnected) {
+        existingSocket.auth = { token: accessToken };
+        existingSocket.connect();
+      }
+      return;
+    }
 
     const socket: Socket = io(baseURL, {
       auth: { token: accessToken },
@@ -78,6 +85,11 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       if (message?.poll) {
         updateMessagePoll(messageId, { ...message.poll, selectedOptionId });
       }
+    });
+
+    socket.on("friend-request:accepted", () => {
+      useFriendStore.getState().getFriends().catch(() => {});
+      useFriendStore.getState().getAllFriendRequests().catch(() => {});
     });
 
     // read message
