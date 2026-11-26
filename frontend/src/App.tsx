@@ -20,7 +20,7 @@ function App() {
 
   useEffect(() => {
     if (accessToken) {
-      connectSocket();
+      void connectSocket();
     }
 
     return () => disconnectSocket();

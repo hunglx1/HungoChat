@@ -70,7 +70,7 @@ export const ChatWindowHeader = ({ chat }: ChatWindowHeaderProps) => {
   const handleVoiceCall = async () => {
     if (!otherUser || !selectedConvo) return;
     try {
-      connectSocket();
+      await connectSocket();
       await startCall(
         selectedConvo._id,
         otherUser._id,
@@ -193,7 +193,7 @@ export const ChatWindowHeader = ({ chat }: ChatWindowHeaderProps) => {
                   disabled={status !== "idle"}
                   onClick={async () => {
                     try {
-                      connectSocket();
+                      await connectSocket();
                       await startCall(
                         selectedConvo._id,
                         otherUser._id,

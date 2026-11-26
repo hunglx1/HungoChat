@@ -13,8 +13,13 @@ const baseURL =
 export const useSocketStore = create<SocketState>((set, get) => ({
   socket: null,
   onlineUsers: [],
-  connectSocket: () => {
-    const accessToken = useAuthStore.getState().accessToken;
+  connectSocket: async () => {
+    let accessToken = useAuthStore.getState().accessToken;
+    if (!accessToken) {
+      await useAuthStore.getState().refresh();
+      accessToken = useAuthStore.getState().accessToken;
+    }
+    if (!accessToken) return;
     const existingSocket = get().socket;
 
     if (existingSocket) {

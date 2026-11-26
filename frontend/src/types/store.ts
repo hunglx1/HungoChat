@@ -85,7 +85,7 @@ export interface ChatState {
 export interface SocketState {
   socket: Socket | null;
   onlineUsers: string[];
-  connectSocket: () => void;
+  connectSocket: () => Promise<void>;
   disconnectSocket: () => void;
 }
 
