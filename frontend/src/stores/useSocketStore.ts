@@ -8,7 +8,9 @@ import { useFriendStore } from "./useFriendStore";
 
 const baseURL =
   import.meta.env.VITE_SOCKET_URL ||
-  (import.meta.env.DEV ? "http://localhost:5001" : window.location.origin);
+  (import.meta.env.DEV
+    ? "http://localhost:5001"
+    : "https://hungochat.onrender.com");
 
 export const useSocketStore = create<SocketState>((set, get) => ({
   socket: null,
