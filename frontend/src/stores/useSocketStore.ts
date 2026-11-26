@@ -27,7 +27,12 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     const socket: Socket = io(baseURL, {
       auth: { token: accessToken },
-      transports: ["websocket"],
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 3000,
+      timeout: 10000,
     });
 
     set({ socket });

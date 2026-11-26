@@ -23,6 +23,7 @@ const VideoCallDialog = () => {
   const {
     status,
     peerName,
+    callType,
     localStream,
     remoteStream,
     muted,
@@ -43,6 +44,11 @@ const VideoCallDialog = () => {
 
   useEffect(() => {
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
+  }, [remoteStream]);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
   }, [remoteStream]);
 
   const handleAccept = async () => {
@@ -76,12 +82,21 @@ const VideoCallDialog = () => {
         </DialogHeader>
 
         <div className="relative flex aspect-video items-center justify-center bg-slate-900">
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className="h-full w-full object-contain"
-          />
+          {callType === "video" ? (
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <>
+              <audio ref={remoteAudioRef} autoPlay />
+              <div className="flex size-28 items-center justify-center rounded-full bg-indigo-600/20">
+                <PhoneIncoming className="size-12 text-indigo-300" />
+              </div>
+            </>
+          )}
           {!remoteStream && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
               <PhoneOutgoing className="size-10 text-slate-300" />
@@ -89,7 +104,7 @@ const VideoCallDialog = () => {
               <p className="text-sm text-slate-300">{peerName}</p>
             </div>
           )}
-          {localStream && (
+          {callType === "video" && localStream && (
             <video
               ref={localVideoRef}
               autoPlay
@@ -142,16 +157,18 @@ const VideoCallDialog = () => {
               >
                 <Phone className="size-5 rotate-[135deg]" />
               </Button>
-              <Button
-                variant={cameraOff ? "destructive" : "secondary"}
-                size="icon-lg"
-                className="rounded-full"
-                onClick={toggleCamera}
-                disabled={!localStream}
-                aria-label={cameraOff ? "Bật camera" : "Tắt camera"}
-              >
-                {cameraOff ? <CameraOff /> : <Camera />}
-              </Button>
+              {callType === "video" && (
+                <Button
+                  variant={cameraOff ? "destructive" : "secondary"}
+                  size="icon-lg"
+                  className="rounded-full"
+                  onClick={toggleCamera}
+                  disabled={!localStream}
+                  aria-label={cameraOff ? "Bật camera" : "Tắt camera"}
+                >
+                  {cameraOff ? <CameraOff /> : <Camera />}
+                </Button>
+              )}
             </>
           )}
         </div>

@@ -8,10 +8,19 @@ import prisma from "../libs/prisma.js";
 const app = express();
 
 const server = http.createServer(app);
+const allowedOrigins = process.env.CLIENT_URL?.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: (origin, callback) => {
+      if (!origin || !allowedOrigins?.length || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error("Origin not allowed"));
+    },
     credentials: true,
   },
 });
@@ -81,12 +90,13 @@ io.on("connection", async (socket) => {
 
   socket.on("call:invite", async (payload, acknowledge) => {
     const respond = typeof acknowledge === "function" ? acknowledge : () => {};
-    const { callId, conversationId, targetUserId, offer } = payload ?? {};
+    const { callId, conversationId, targetUserId, offer, callType } = payload ?? {};
     if (
       !validCallId(callId) ||
       typeof conversationId !== "string" ||
       typeof targetUserId !== "string" ||
       targetUserId === user._id ||
+      (callType !== "audio" && callType !== "video") ||
       !isSessionDescription(offer, "offer")
     ) {
       respond({ ok: false, message: "Thông tin cuộc gọi không hợp lệ" });
@@ -146,6 +156,7 @@ io.on("connection", async (socket) => {
         callerId: user._id,
         callerName: user.displayName,
         offer,
+        callType,
       });
       respond({ ok: true });
     } catch (error) {

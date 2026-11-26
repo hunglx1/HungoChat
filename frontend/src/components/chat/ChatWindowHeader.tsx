@@ -67,8 +67,23 @@ export const ChatWindowHeader = ({ chat }: ChatWindowHeaderProps) => {
     ? selectedConvo.participants.filter((p) => onlineUsers.includes(p._id)).length
     : 0;
 
-  const handleVoiceCall = () => {
-    toast.info("Đang khởi tạo cuộc gọi thoại bảo mật...");
+  const handleVoiceCall = async () => {
+    if (!otherUser || !selectedConvo) return;
+    try {
+      await startCall(
+        selectedConvo._id,
+        otherUser._id,
+        otherUser.displayName,
+        "audio"
+      );
+    } catch (error) {
+      console.error("Không thể bắt đầu cuộc gọi thoại", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Không thể truy cập microphone"
+      );
+    }
   };
 
   const handleTogglePinBanner = () => {
@@ -155,6 +170,7 @@ export const ChatWindowHeader = ({ chat }: ChatWindowHeaderProps) => {
               <Button
                 variant="ghost"
                 size="icon"
+                disabled={status !== "idle"}
                 onClick={handleVoiceCall}
                 className="size-9 rounded-xl text-slate-400 hover:text-white hover:bg-[#1F2430] transition-colors"
               >
@@ -179,7 +195,8 @@ export const ChatWindowHeader = ({ chat }: ChatWindowHeaderProps) => {
                       await startCall(
                         selectedConvo._id,
                         otherUser._id,
-                        otherUser.displayName
+                        otherUser.displayName,
+                        "video"
                       );
                     } catch (error) {
                       console.error("Không thể bắt đầu cuộc gọi video", error);
