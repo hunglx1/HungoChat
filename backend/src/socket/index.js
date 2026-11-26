@@ -11,11 +11,27 @@ const server = http.createServer(app);
 const allowedOrigins = process.env.CLIENT_URL?.split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (!allowedOrigins?.length) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "localhost" ||
+        url.hostname.endsWith(".vercel.app") ||
+        url.hostname.endsWith(".onrender.com"))
+    );
+  } catch {
+    return false;
+  }
+};
 
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
-      if (!origin || !allowedOrigins?.length || allowedOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }

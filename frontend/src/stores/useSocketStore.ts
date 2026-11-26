@@ -42,6 +42,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       console.log("Đã kết nối với socket");
     });
 
+    socket.on("connect_error", (error) => {
+      console.error("Không thể kết nối Socket.IO:", error.message);
+    });
+
     // online users
     socket.on("online-users", (userIds) => {
       set({ onlineUsers: userIds });

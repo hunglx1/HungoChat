@@ -21,6 +21,21 @@ const PORT = process.env.PORT || 5001;
 const allowedOrigins = process.env.CLIENT_URL?.split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (!allowedOrigins?.length) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname.endsWith(".vercel.app") ||
+        url.hostname.endsWith(".onrender.com"))
+    );
+  } catch {
+    return false;
+  }
+};
 
 // middlewares
 app.use(express.json());
@@ -28,7 +43,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || !allowedOrigins || allowedOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }
